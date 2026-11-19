@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f4fb8">
+<meta name="self-update" content="on">
+<meta name="apple-mobile-web-app-title" content="하모니카">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>*{box-sizing:border-box}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>시니어 하모니카 연습곡</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@500;700;900&display=swap">
+<style>
+/* Layout: one column of large song cards, newest first; one big play button per recording */
+:root {
+  --bg: #f3f5f8;
+  --card: #ffffff;
+  --ink: #111827;
+  --muted: #4b5563;
+  --line: #d5dbe4;
+  --accent: #1f4fb8;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3ebfa;
+  --new: #b42318;
+  --new-ink: #ffffff;
+  --playing: #0f6b3e;
+  --playing-ink: #ffffff;
+  --display: "Gowun Batang", "Noto Serif KR", serif;
+  --body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --scale: 1;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1420; --card: #182132; --ink: #f4f6fa; --muted: #b6c0d0; --line: #2c3a52;
+  --accent: #6f9cf5; --accent-ink: #0b1220; --accent-soft: #23345a; --new: #ff8a7a; --new-ink: #1a0b09;
+  --playing: #5fd39a; --playing-ink: #08180f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1420; --card: #182132; --ink: #f4f6fa; --muted: #b6c0d0; --line: #2c3a52;
+  --accent: #6f9cf5; --accent-ink: #0b1220; --accent-soft: #23345a; --new: #ff8a7a; --new-ink: #1a0b09;
+  --playing: #5fd39a; --playing-ink: #08180f; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: calc(20px * var(--scale)); line-height: 1.5; word-break: keep-all;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
+.wrap { max-width: 640px; margin: 0 auto; display: grid; gap: 20px; }
+
+header { display: grid; gap: 6px; padding-block: 8px 4px; }
+.teacher { color: var(--muted); font-weight: 700; }
+h1 { font-family: var(--display); font-size: min(2.1em, calc((100vw - 32px) / 11.5)); line-height: 1.2; margin: 0; text-wrap: balance; }
+.howto { margin: 4px 0 0; color: var(--muted); font-size: 0.95em; }
+
+.sizebar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sizebar span { font-weight: 700; color: var(--muted); }
+.sizebtn { font: inherit; font-weight: 700; min-height: 52px; padding: 0 18px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.sizebtn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+
+#list { display: grid; gap: 20px; }
+.song { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 20px; display: grid; gap: 14px; }
+.song.is-playing { border-color: var(--playing); }
+.song-head { display: grid; gap: 4px; min-width: 0; }
+.meta { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; color: var(--muted); font-weight: 700; font-size: 0.9em; }
+.badge-new { color: var(--new-ink); background: var(--new); padding: 2px 10px; border-radius: 999px; font-size: 0.85em; }
+.song h2 { font-size: 1.55em; line-height: 1.25; margin: 0; font-weight: 900; text-wrap: balance; overflow-wrap: anywhere; }
+.note { margin: 0; color: var(--muted); font-size: 0.95em; white-space: pre-line; }
+
+.track { display: grid; gap: 12px; }
+.play { font: inherit; font-weight: 900; font-size: 1.15em; width: 100%; min-height: 76px; border-radius: 14px; border: 0; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; gap: 14px; padding: 8px 12px; }
+.play.secondary { background: var(--accent-soft); color: var(--ink); border: 2px solid var(--accent); }
+.play.on { background: var(--playing); color: var(--playing-ink); border-color: var(--playing); }
+.play svg { width: 1.3em; height: 1.3em; flex: none; }
+.play:focus-visible, .sizebtn:focus-visible, .ctl:focus-visible, input[type=range]:focus-visible { outline: 4px solid var(--ink); outline-offset: 3px; }
+
+.panel { display: grid; gap: 12px; padding: 14px; border-radius: 14px; background: var(--bg); }
+.time { display: flex; justify-content: space-between; font-weight: 700; font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; height: 44px; accent-color: var(--playing); margin: 0; }
+.ctls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ctl { font: inherit; font-weight: 700; font-size: 0.9em; min-height: 60px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; padding: 4px; }
+.ctl[aria-pressed="true"] { border-color: var(--playing); background: var(--playing); color: var(--playing-ink); }
+.err { margin: 0; color: var(--new); font-weight: 700; font-size: 0.9em; }
+.play:disabled { cursor: progress; opacity: .85; }
+.ens { display: grid; gap: 12px; padding: 16px; border-radius: 14px; border: 2px solid var(--line); background: var(--bg); }
+.ens .panel { background: var(--card); }
+.ens-title { font-weight: 900; font-size: 1.1em; }
+.ens-q { color: var(--muted); font-weight: 700; font-size: 0.95em; margin-top: -6px; }
+.partpick { display: grid; gap: 10px; border-radius: 14px; }
+.partpick.ask { outline: 4px solid var(--new); outline-offset: 4px; }
+.pp { font: inherit; font-weight: 900; font-size: 1.05em; min-height: 64px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.pp[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.pp:focus-visible { outline: 4px solid var(--ink); outline-offset: 3px; }
+.ens-hint { margin: 0; color: var(--new); font-weight: 900; }
+
+.state { background: var(--card); border: 2px dashed var(--line); border-radius: 18px; padding: 24px 20px; color: var(--muted); font-weight: 700; text-align: center; margin: 0; }
+footer { color: var(--muted); font-size: 0.9em; text-align: center; padding-top: 8px; display: grid; gap: 14px; justify-items: center; }
+.reload { font: inherit; font-weight: 700; font-size: 1.05em; min-height: 52px; padding: 0 24px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.reload:focus-visible { outline: 4px solid var(--ink); outline-offset: 3px; }
+@media (max-width: 380px) { .ctls { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: no-preference) { .play, .ctl, .pp { transition: background .15s, transform .1s; } .play:active { transform: scale(.98); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="teacher" id="teacher">한국기독교하모니카협회: 이윤석</div>
+    <h1 id="pagetitle">시니어 하모니카 연습곡</h1>
+    <p class="howto" id="howto">듣고 싶은 곡의 파란 버튼을 누르세요. 새로 올라온 곡이 맨 위에 있습니다.</p>
+  </header>
+
+  <div class="sizebar" role="group" aria-label="글자 크기">
+    <span>글자 크기</span>
+    <button class="sizebtn" id="size-1" data-scale="1" aria-pressed="true">크게</button>
+    <button class="sizebtn" id="size-2" data-scale="1.2" aria-pressed="false">아주 크게</button>
+  </div>
+
+  <main id="list"><p class="state">곡 목록을 불러오는 중입니다…</p></main>
+
+  <footer>
+    <button class="reload" id="reload">화면 새로 고치기</button>
+    <div>궁금한 점은 수업 시간에 물어보세요.</div>
+  </footer>
+</div>
+
+<script>
+/* 이 파일은 고칠 필요가 없습니다. 곡과 문구는 songs.txt에서 고치세요. */
+const SONG_FILE = "songs.txt";
+const AUDIO_FOLDER = "mp3/";
+const NEW_DAYS = 14;
+const TRACK_KINDS = [
+  { key: "연주", label: "선생님 연주 듣기" },
+  { key: "전체", label: "합주 전체 듣기" },
+  { key: "느린연주", label: "느린 연주 듣기" },
+  { key: "1파트", label: "1파트 듣기" },
+  { key: "2파트", label: "2파트 듣기" },
+  { key: "3파트", label: "3파트 듣기" },
+  { key: "4파트", label: "4파트 듣기" },
+  { key: "반주", label: "반주에 맞춰 연습하기" },
+];
+
+/* ---------- songs.txt 읽기 ---------- */
+function parseSongs(text) {
+  const settings = {}, songs = [];
+  for (const block of text.replace(/\r/g, "").split(/\n[ \t]*\n/)) {
+    const o = {};
+    for (const raw of block.split("\n")) {
+      const line = raw.trim();
+      if (!line || line.startsWith("#")) continue;
+      const m = line.match(/^([^:：]+)[:：]\s*(.*)$/);
+      if (!m) continue;
+      const k = m[1].replace(/\s/g, ""), v = m[2].trim();
+      o[k] = o[k] && k === "메모" ? o[k] + "\n" + v : v;
+    }
+    if (o["제목"]) songs.push(o); else Object.assign(settings, o);
+  }
+  return { settings, songs };
+}
+function readDate(s) {
+  const m = (s || "").match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+  if (!m) return { text: s || "", date: null };
+  return { text: `${+m[2]}월 ${+m[3]}일 수업`, date: new Date(+m[1], +m[2] - 1, +m[3]) };
+}
+function isNewSong(song, date) {
+  const flag = (song["새곡"] || "").trim();
+  if (/^(예|네|o|yes)$/i.test(flag)) return true;
+  if (/^(아니오|아니요|x|no)$/i.test(flag)) return false;
+  if (!date) return false;
+  const days = (Date.now() - date.getTime()) / 86400000;
+  return days >= -1 && days <= NEW_DAYS;
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const audioUrl = f => /^https?:\/\//.test(f) ? f : AUDIO_FOLDER + f.split("/").map(encodeURIComponent).join("/");
+/* 맥에서 올린 한글 파일 이름은 자모가 나뉘어 저장되므로 두 가지 이름을 모두 시도 */
+const audioUrls = f => [...new Set([f.normalize("NFC"), f.normalize("NFD"), f].map(audioUrl))];
+
+async function loadText() {
+  try {
+    const r = await fetch(SONG_FILE + "?t=" + Date.now(), { cache: "no-store" });
+    if (r.ok) return await r.text();
+  } catch (e) {}
+  const r = await fetch(SONG_FILE);
+  if (!r.ok) throw new Error(r.status);
+  return await r.text();
+}
+
+/* ---------- 재생 ---------- */
+const audio = new Audio();
+audio.preload = "none";
+let current = null;
+const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.2" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="1.2" fill="currentColor"/></svg>';
+const ICON_WAIT = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4 4"/></svg>';
+const fmt = s => isFinite(s) ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "0:00";
+const labelOf = c => typeof c.label === "function" ? c.label() : c.label;
+
+function setBtn(c, playing, waitText) {
+  c.btn.classList.toggle("on", playing);
+  const icon = waitText ? ICON_WAIT : playing ? ICON_PAUSE : ICON_PLAY;
+  c.btn.innerHTML = icon + `<span>${esc(waitText || (playing ? "멈추기" : labelOf(c)))}</span>`;
+  c.card.classList.toggle("is-playing", playing);
+}
+function setRate(slow) {
+  audio.playbackRate = slow ? 0.75 : 1;
+  audio.preservesPitch = true; audio.webkitPreservesPitch = true;
+}
+const isOn = (c, cls) => c.panel.querySelector("." + cls).getAttribute("aria-pressed") === "true";
+
+function stopCurrent() {
+  if (!current) return;
+  audio.pause(); setBtn(current, false);
+  current.btn.disabled = false;
+  current.panel.hidden = true; current.err.hidden = true;
+  current = null;
+}
+function startUrl(c, url, at, autoplay) {
+  current = c; c.err.hidden = true;
+  audio.src = url;
+  audio.loop = isOn(c, "loop"); setRate(isOn(c, "slow"));
+  c.panel.hidden = false;
+  if (at) audio.addEventListener("loadedmetadata", () => { try { audio.currentTime = Math.min(at, audio.duration - 0.5); } catch (e) {} }, { once: true });
+  if (autoplay === false) { audio.load(); setBtn(c, false); }
+  else { audio.play().then(() => setRate(isOn(c, "slow"))).catch(() => {}); setBtn(c, true); }
+  if ("mediaSession" in navigator && window.MediaMetadata) {
+    try { navigator.mediaSession.metadata = new MediaMetadata({ title: c.title, artist: labelOf(c) }); } catch (e) {}
+  }
+}
+function showErr(c, msg) { setBtn(c, false); c.panel.hidden = true; c.err.textContent = msg; c.err.hidden = false; }
+
+async function prepareAndPlay(c, at, autoplay) {
+  current = c;
+  c.btn.disabled = true;
+  try {
+    const url = await c.getUrl(t => { if (current === c) setBtn(c, false, t); });
+    if (current !== c) return;
+    c.btn.disabled = false;
+    startUrl(c, url, at, autoplay);
+  } catch (e) {
+    c.btn.disabled = false;
+    if (current === c) { showErr(c, "음원 파일을 불러오지 못했습니다. " + (e && e.file ? "(" + e.file + ")" : "인터넷 연결을 확인해 주세요.")); current = null; }
+  }
+}
+function toggle(c) {
+  if (current && current.id === c.id) {
+    if (c.btn.disabled) return;
+    if (audio.paused) { audio.play().catch(() => {}); setBtn(current, true); }
+    else { audio.pause(); setBtn(current, false); }
+    return;
+  }
+  stopCurrent();
+  if (c.getUrl) prepareAndPlay(c, 0, true);
+  else { c.ui = 0; startUrl(c, c.urls[0], 0, true); }
+}
+audio.addEventListener("timeupdate", () => {
+  if (!current || current.btn.disabled) return;
+  current.panel.querySelector(".cur").textContent = fmt(audio.currentTime);
+  current.panel.querySelector(".dur").textContent = fmt(audio.duration);
+  if (audio.duration) current.panel.querySelector("input[type=range]").value = audio.currentTime / audio.duration * 100;
+});
+audio.addEventListener("ended", () => { if (current) setBtn(current, false); });
+audio.addEventListener("error", () => {
+  if (!current || !audio.getAttribute("src") || current.getUrl) return;
+  if (current.ui < current.urls.length - 1) { current.ui++; startUrl(current, current.urls[current.ui], 0, true); return; }
+  showErr(current, `음원 파일을 찾을 수 없습니다 (${current.file})`);
+});
+
+/* ---------- 합주 연습: 파트를 폰에서 섞기 ---------- */
+const MIX_RATE = 32000;
+let decodeCtx = null, lastMixUrl = null;
+function getCtx() {
+  if (!decodeCtx) { const C = window.OfflineAudioContext || window.webkitOfflineAudioContext; decodeCtx = new C(1, MIX_RATE, MIX_RATE); }
+  return decodeCtx;
+}
+async function loadMono(file) {
+  let r = null;
+  for (const u of audioUrls(file)) {
+    try { const x = await fetch(u); if (x.ok) { r = x; break; } } catch (e) {}
+  }
+  if (!r) throw { file };
+  const ab = await r.arrayBuffer();
+  const b = await new Promise((ok, no) => getCtx().decodeAudioData(ab, ok, no)).catch(() => { throw { file }; });
+  const n = b.length, ch = b.numberOfChannels, out = new Int16Array(n);
+  const data = []; for (let k = 0; k < ch; k++) data.push(b.getChannelData(k));
+  for (let i = 0; i < n; i++) {
+    let v = 0; for (let k = 0; k < ch; k++) v += data[k][i];
+    v /= ch; out[i] = v > 1 ? 32767 : v < -1 ? -32768 : v * 32767;
+  }
+  return out;
+}
+function loadEnsemble(ens, progress) {
+  if (!ens.loading) {
+    const files = ens.parts.map(p => p.file).concat(ens.mr ? [ens.mr] : []);
+    let done = 0;
+    ens.loading = (async () => {
+      const out = [];
+      for (const f of files) { out.push(await loadMono(f)); done++; ens.onProgress && ens.onProgress(done, files.length); }
+      return out;
+    })();
+    ens.loading.catch(() => { ens.loading = null; });
+  }
+  ens.onProgress = (d, n) => progress(`준비하고 있습니다… ${d}/${n}`);
+  return ens.loading;
+}
+function mixToWav(tracks, gains) {
+  let len = 0; tracks.forEach(t => { len = Math.max(len, t.length); });
+  let peak = 1;
+  for (let i = 0; i < len; i++) {
+    let v = 0; for (let k = 0; k < tracks.length; k++) if (gains[k] && i < tracks[k].length) v += tracks[k][i] * gains[k];
+    if (v > peak) peak = v; else if (-v > peak) peak = -v;
+  }
+  const scale = peak > 32000 ? 32000 / peak : 1;
+  const buf = new ArrayBuffer(44 + len * 2), dv = new DataView(buf), pcm = new Int16Array(buf, 44, len);
+  for (let i = 0; i < len; i++) {
+    let v = 0; for (let k = 0; k < tracks.length; k++) if (gains[k] && i < tracks[k].length) v += tracks[k][i] * gains[k];
+    pcm[i] = v * scale;
+  }
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, "RIFF"); dv.setUint32(4, 36 + len * 2, true); w(8, "WAVE"); w(12, "fmt "); dv.setUint32(16, 16, true);
+  dv.setUint16(20, 1, true); dv.setUint16(22, 1, true); dv.setUint32(24, MIX_RATE, true); dv.setUint32(28, MIX_RATE * 2, true);
+  dv.setUint16(32, 2, true); dv.setUint16(34, 16, true); w(36, "data"); dv.setUint32(40, len * 2, true);
+  if (lastMixUrl) URL.revokeObjectURL(lastMixUrl);
+  return lastMixUrl = URL.createObjectURL(new Blob([buf], { type: "audio/wav" }));
+}
+
+function buildEnsemble(song, no, card, parts) {
+  const ens = { parts, mr: song["반주"] || null, loading: null };
+  const key = "part:" + song["제목"];
+  let mine = null;
+  try { const v = localStorage.getItem(key); if (v && parts.some(p => p.n === v)) mine = v; } catch (e) {}
+
+  const box = document.createElement("div");
+  box.className = "ens";
+  box.innerHTML = `<div class="ens-title">합주 연습</div>
+    <div class="ens-q">내 파트를 누르세요</div>
+    <div class="partpick" role="group" aria-label="내 파트" style="grid-template-columns: repeat(${parts.length}, 1fr)">
+      ${parts.map(p => `<button class="pp" id="s${no}-pp${p.n}" data-n="${p.n}" aria-pressed="${p.n === mine}">${p.n}파트</button>`).join("")}
+    </div>
+    <p class="ens-hint" hidden>먼저 위에서 내 파트를 눌러 주세요.</p>
+    <button class="play" id="s${no}-minus"></button>
+    <button class="play secondary" id="s${no}-solo"></button>
+    <p class="err" hidden></p>
+    <div class="panel" hidden>
+      <input type="range" id="s${no}-ens-seek" min="0" max="100" value="0" step="0.1" aria-label="재생 위치">
+      <div class="time"><span class="cur">0:00</span><span class="dur">0:00</span></div>
+      <div class="ctls">
+        <button class="ctl back" id="s${no}-ens-back">10초 뒤로</button>
+        <button class="ctl slow" id="s${no}-ens-slow" aria-pressed="false">천천히</button>
+        <button class="ctl loop" id="s${no}-ens-loop" aria-pressed="false">계속 반복</button>
+      </div>
+    </div>`;
+  const panel = box.querySelector(".panel"), err = box.querySelector(".err"), hint = box.querySelector(".ens-hint");
+  const modes = [
+    { mode: "minus", label: () => mine ? `${mine}파트 빼고 듣기` : "내 파트 빼고 듣기" },
+    { mode: "solo", label: () => mine ? `${mine}파트만 듣기` : "내 파트만 듣기" },
+  ].map(m => {
+    const c = { id: `s${no}-${m.mode}`, card, title: song["제목"], label: m.label, panel, err, btn: box.querySelector(`#s${no}-${m.mode}`) };
+    c.getUrl = async progress => {
+      progress("준비하고 있습니다…");
+      const tracks = await loadEnsemble(ens, progress);
+      progress("준비하고 있습니다…");
+      await new Promise(r => setTimeout(r, 30));
+      const gains = parts.map(p => m.mode === "minus" ? (p.n === mine ? 0 : 1) : (p.n === mine ? 1 : 0));
+      if (ens.mr) gains.push(m.mode === "minus" ? 1 : 0);
+      return mixToWav(tracks, gains);
+    };
+    c.btn.addEventListener("click", () => {
+      if (!mine) { hint.hidden = false; box.querySelector(".partpick").classList.add("ask"); return; }
+      toggle(c);
+    });
+    setBtn(c, false);
+    return c;
+  });
+
+  box.querySelectorAll(".pp").forEach(b => b.addEventListener("click", () => {
+    mine = b.dataset.n;
+    box.querySelectorAll(".pp").forEach(x => x.setAttribute("aria-pressed", x === b));
+    hint.hidden = true; box.querySelector(".partpick").classList.remove("ask");
+    try { localStorage.setItem(key, mine); } catch (e) {}
+    const playingHere = modes.find(c => current && current.id === c.id);
+    modes.forEach(c => { if (c !== playingHere) setBtn(c, false); });
+    if (playingHere && !playingHere.btn.disabled) {
+      const was = !audio.paused, at = audio.currentTime;
+      audio.pause();
+      prepareAndPlay(playingHere, at, was);
+    }
+  }));
+  panel.querySelector("input[type=range]").addEventListener("input", e => { if (audio.duration) audio.currentTime = e.target.value / 100 * audio.duration; });
+  panel.querySelector(".back").addEventListener("click", () => { audio.currentTime = Math.max(0, audio.currentTime - 10); });
+  panel.querySelector(".slow").addEventListener("click", e => { const on = e.currentTarget.getAttribute("aria-pressed") !== "true"; e.currentTarget.setAttribute("aria-pressed", on); setRate(on); });
+  panel.querySelector(".loop").addEventListener("click", e => { const on = e.currentTarget.getAttribute("aria-pressed") !== "true"; e.currentTarget.setAttribute("aria-pressed", on); audio.loop = on; });
+  return box;
+}
+
+/* ---------- 화면 그리기 ---------- */
+function render({ settings, songs }) {
+  if (settings["교실이름"] !== undefined) document.getElementById("teacher").textContent = settings["교실이름"];
+  if (settings["페이지제목"]) { document.getElementById("pagetitle").textContent = settings["페이지제목"]; document.title = settings["페이지제목"]; }
+  if (settings["안내"] !== undefined) document.getElementById("howto").textContent = settings["안내"];
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  if (!songs.length) { list.innerHTML = '<p class="state">아직 올라온 곡이 없습니다.</p>'; return; }
+
+  songs.forEach((song, idx) => {
+    const no = songs.length - idx;
+    const d = readDate(song["날짜"]);
+    const card = document.createElement("article");
+    card.className = "song";
+    card.innerHTML = `<div class="song-head">
+        <div class="meta"><span>${no}번 곡</span>${d.text ? `<span>· ${esc(d.text)}</span>` : ""}${isNewSong(song, d.date) ? '<span class="badge-new">새 곡</span>' : ""}</div>
+        <h2>${esc(song["제목"])}</h2>${song["메모"] ? `<p class="note">${esc(song["메모"])}</p>` : ""}</div>`;
+    const parts = ["1", "2", "3", "4"].filter(n => song[n + "파트"]).map(n => ({ n, file: song[n + "파트"] }));
+    const ensemble = parts.length >= 2;
+    const kinds = TRACK_KINDS.filter(k => {
+      if (ensemble && /파트$/.test(k.key)) return false;
+      return song[k.key] || (k.key === "연주" && song["음원"]);
+    });
+    if (!kinds.length && !ensemble) card.insertAdjacentHTML("beforeend", '<p class="note">녹음을 준비하고 있습니다.</p>');
+    kinds.forEach((k, i) => {
+      const file = song[k.key] || song["음원"];
+      const id = `s${no}-t${i}`;
+      const wrap = document.createElement("div");
+      wrap.className = "track";
+      wrap.innerHTML = `<button class="play ${i ? "secondary" : ""}" id="${id}"></button>
+        <p class="err" hidden></p>
+        <div class="panel" hidden>
+          <input type="range" id="${id}-seek" min="0" max="100" value="0" step="0.1" aria-label="재생 위치">
+          <div class="time"><span class="cur">0:00</span><span class="dur">0:00</span></div>
+          <div class="ctls">
+            <button class="ctl back" id="${id}-back">10초 뒤로</button>
+            <button class="ctl slow" id="${id}-slow" aria-pressed="false">천천히</button>
+            <button class="ctl loop" id="${id}-loop" aria-pressed="false">계속 반복</button>
+          </div>
+        </div>`;
+      const c = { id, card, label: k.label, title: song["제목"], urls: audioUrls(file), ui: 0, file,
+        btn: wrap.querySelector(".play"), panel: wrap.querySelector(".panel"), err: wrap.querySelector(".err") };
+      setBtn(c, false);
+      c.btn.addEventListener("click", () => toggle(c));
+      wrap.querySelector("input[type=range]").addEventListener("input", e => { if (audio.duration) audio.currentTime = e.target.value / 100 * audio.duration; });
+      wrap.querySelector(".back").addEventListener("click", () => { audio.currentTime = Math.max(0, audio.currentTime - 10); });
+      wrap.querySelector(".slow").addEventListener("click", e => {
+        const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+        e.currentTarget.setAttribute("aria-pressed", on); setRate(on);
+      });
+      wrap.querySelector(".loop").addEventListener("click", e => {
+        const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+        e.currentTarget.setAttribute("aria-pressed", on); audio.loop = on;
+      });
+      card.appendChild(wrap);
+    });
+    if (ensemble) card.appendChild(buildEnsemble(song, no, card, parts));
+    list.appendChild(card);
+  });
+}
+
+/* ---------- 최신 내용 확인 (홈 화면 아이콘으로 열었을 때도) ---------- */
+let lastSongsText = null, pageSrc = null;
+const selfUpdate = !!document.querySelector('meta[name="self-update"]');
+function hardReload() { location.replace(location.pathname + "?v=" + Date.now()); }
+async function fetchPage() {
+  const r = await fetch(location.pathname + "?check=" + Date.now(), { cache: "no-store" });
+  return r.ok ? r.text() : null;
+}
+async function refresh() {
+  if (current && !audio.paused) return;          // 듣는 중에는 건드리지 않음
+  if (selfUpdate) {
+    try { const src = await fetchPage(); if (src && pageSrc && src !== pageSrc) { hardReload(); return; } if (src && !pageSrc) pageSrc = src; } catch (e) {}
+  }
+  try {
+    const t = await loadText();
+    if (t !== lastSongsText) { lastSongsText = t; stopCurrent(); render(parseSongs(t)); }
+  } catch (e) {}
+}
+loadText().then(t => { lastSongsText = t; render(parseSongs(t)); }).catch(() => {
+  document.getElementById("list").innerHTML = '<p class="state">곡 목록을 불러오지 못했습니다.<br>인터넷 연결을 확인하고 화면을 다시 열어 주세요.</p>';
+});
+if (selfUpdate) fetchPage().then(src => { if (src && !pageSrc) pageSrc = src; }).catch(() => {});
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
+window.addEventListener("pageshow", e => { if (e.persisted) refresh(); });
+window.addEventListener("focus", () => refresh());
+document.getElementById("reload").addEventListener("click", hardReload);
+
+/* ---------- 글자 크기 ---------- */
+const SCALES = ["1", "1.2"];
+function setScale(s) {
+  if (!SCALES.includes(s)) s = "1";
+  document.documentElement.style.setProperty("--scale", s);
+  document.querySelectorAll(".sizebtn").forEach(b => b.setAttribute("aria-pressed", b.dataset.scale === s));
+  try { localStorage.setItem("fontScale", s); } catch (e) {}
+}
+document.querySelectorAll(".sizebtn[data-scale]").forEach(b => b.addEventListener("click", () => setScale(b.dataset.scale)));
+try { setScale(localStorage.getItem("fontScale") || "1"); } catch (e) { setScale("1"); }
+</script>
+
+</body>
+</html>
