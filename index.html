@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1f4fb8">
 <meta name="self-update" content="on">
-<meta name="apple-mobile-web-app-title" content="하모니카">
+<meta name="apple-mobile-web-app-title" content="하모니카 연습">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
 <style>*{box-sizing:border-box}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
-<title>시니어 하모니카 연습곡</title>
+<title>한국기독교하모니카오케스트라</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@500;700;900&display=swap">
 <style>
 /* Layout: one column of large song cards, newest first; one big play button per recording */
@@ -47,7 +47,7 @@ body { background: var(--bg); color: var(--ink); font-family: var(--body); font-
 
 header { display: grid; gap: 6px; padding-block: 8px 4px; }
 .teacher { color: var(--muted); font-weight: 700; }
-h1 { font-family: var(--display); font-size: min(2.1em, calc((100vw - 32px) / 11.5)); line-height: 1.2; margin: 0; text-wrap: balance; }
+h1 { font-family: var(--display); font-size: min(2.1em, calc((100vw - 32px) / 15)); line-height: 1.2; margin: 0; overflow-wrap: anywhere; text-wrap: balance; }
 .howto { margin: 4px 0 0; color: var(--muted); font-size: 0.95em; }
 
 .sizebar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -103,7 +103,7 @@ footer { color: var(--muted); font-size: 0.9em; text-align: center; padding-top:
 <div class="wrap">
   <header>
     <div class="teacher" id="teacher">한국기독교하모니카협회: 이윤석</div>
-    <h1 id="pagetitle">시니어 하모니카 연습곡</h1>
+    <h1 id="pagetitle">한국기독교하모니카오케스트라</h1>
     <p class="howto" id="howto">듣고 싶은 곡의 파란 버튼을 누르세요. 새로 올라온 곡이 맨 위에 있습니다.</p>
   </header>
 
@@ -126,10 +126,13 @@ footer { color: var(--muted); font-size: 0.9em; text-align: center; padding-top:
 const SONG_FILE = "songs.txt";
 const AUDIO_FOLDER = "mp3/";
 const NEW_DAYS = 14;
+/* 같은 주소(github.io) 아래 다른 페이지와 설정이 섞이지 않도록 페이지별로 따로 저장 */
+const STORE = location.pathname.replace(/index\.html$/, "") + ":";
 const TRACK_KINDS = [
   { key: "연주", label: "선생님 연주 듣기" },
   { key: "전체", label: "합주 전체 듣기" },
   { key: "느린연주", label: "느린 연주 듣기" },
+  { key: "빠른연주", label: "빠른 연주 듣기" },
   { key: "1파트", label: "1파트 듣기" },
   { key: "2파트", label: "2파트 듣기" },
   { key: "3파트", label: "3파트 듣기" },
@@ -322,7 +325,7 @@ function mixToWav(tracks, gains) {
 
 function buildEnsemble(song, no, card, parts) {
   const ens = { parts, mr: song["반주"] || null, loading: null };
-  const key = "part:" + song["제목"];
+  const key = STORE + "part:" + song["제목"];
   let mine = null;
   try { const v = localStorage.getItem(key); if (v && parts.some(p => p.n === v)) mine = v; } catch (e) {}
 
@@ -484,10 +487,10 @@ function setScale(s) {
   if (!SCALES.includes(s)) s = "1";
   document.documentElement.style.setProperty("--scale", s);
   document.querySelectorAll(".sizebtn").forEach(b => b.setAttribute("aria-pressed", b.dataset.scale === s));
-  try { localStorage.setItem("fontScale", s); } catch (e) {}
+  try { localStorage.setItem(STORE + "fontScale", s); } catch (e) {}
 }
 document.querySelectorAll(".sizebtn[data-scale]").forEach(b => b.addEventListener("click", () => setScale(b.dataset.scale)));
-try { setScale(localStorage.getItem("fontScale") || "1"); } catch (e) { setScale("1"); }
+try { setScale(localStorage.getItem(STORE + "fontScale") || "1"); } catch (e) { setScale("1"); }
 </script>
 
 </body>
